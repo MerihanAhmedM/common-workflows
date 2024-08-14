@@ -9,25 +9,28 @@ jobs:
   create-pr:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-nodes@v3
+        with: 
+           node-version: '16'
+           
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          app-id: ${{vars.APP_ID}}
+          private-key: ${{ secrets.PRIVATE-KEY}}
+          installation-id: ${{vars.INSTALLATION_ID}}
+      - name: create pull req
+        uses:  peter-evans/create-pull-request@v4
+        with:
+          token: ${{ steps.create-app-token.outputs.token }}
+          repository: MerihanAhmedM/gold
+          title: My Pull Request
+          body: This is a pull request created by GitHub Actions
+          head: main
+          base: main
 
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
 
-      - name: Authenticate GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_APP_TOKEN }}  # This is your GitHub App token
-        run: |
-          gh auth login --with-token <<< $GH_TOKEN
-
-      - name: Create Pull Request
-        run: |
-          gh repo fork https://github.com/MerihanAhmedM/gold --clone=false
-          gh pr create \
-            --title "Automated PR from common-workflows" \
-            --body "This is an automated PR created by a workflow." \
-            --head pr-branch \
-            --base main
+        
