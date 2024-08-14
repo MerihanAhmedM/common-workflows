@@ -12,43 +12,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Generate JWT and Create Pull Request
+      - name: Install GitHub CLI
         run: |
-          # Install jq for JSON parsing
-          sudo apt-get install -y jq
+          sudo apt-get update
+          sudo apt-get install -y gh
 
-          # Generate a JWT
-          JWT=$(python -c "
-import jwt
-import time
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_APP_TOKEN }}  # This is your GitHub App token
+        run: |
+          gh auth login --with-token <<< $GH_TOKEN
 
-# Load private key
-private_key = '''${{ secrets.PRIVATE_KEY }}'''
-
-# Generate JWT
-payload = {
-    'iat': int(time.time()),
-    'exp': int(time.time()) + 600,
-    'iss': '${{ secrets.APP_ID }}'
-}
-
-token = jwt.encode(payload, private_key, algorithm='RS256')
-print(token.decode('utf-8'))
-")
-
-          # Get an installation access token
-          ACCESS_TOKEN=$(curl -X POST https://api.github.com/app/installations/${{ secrets.INSTALLATION_ID }}/access_tokens \
-            -H "Authorization: Bearer $JWT" \
-            -H "Accept: application/vnd.github.machine-man-preview+json" \
-            | jq -r .token)
-
-          # Create a pull request
-          curl -X POST https://api.github.com/repos/MerihanAhmedM/gold/pulls \
-            -H "Authorization: token $ACCESS_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d '{
-              "title": "Automated PR from common-workflows",
-              "head": "pr-branch",
-              "base": "main",
-              "body": "This is an automated PR created by a workflow."
-            }'
+      - name: Create Pull Request
+        run: |
+          gh repo fork https://github.com/MerihanAhmedM/gold --clone=false
+          gh pr create \
+            --title "Automated PR from common-workflows" \
+            --body "This is an automated PR created by a workflow." \
+            --head pr-branch \
+            --base main
