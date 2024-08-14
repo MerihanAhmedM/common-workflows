@@ -21,3 +21,20 @@ jobs:
           branch: pr-branch
           title: "Automated PR from common-workflows"
           body: "This is an automated PR created by a workflow."
+
+      - name: Check Pull Request Status
+        id: check_pr
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: 'MerihanAhmedM:pr-branch'
+            });
+            if (prs.length > 0) {
+              console.log('Pull request created successfully.');
+            } else {
+              console.log('No pull request found.');
+            }
