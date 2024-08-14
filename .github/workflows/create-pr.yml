@@ -14,27 +14,35 @@ jobs:
 
       - name: Create Pull Request
         id: create_pr
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: MerihanAhmedM/gold
-          branch: pr-branch
-          title: "Automated PR from common-workflows"
-          body: "This is an automated PR created by a workflow."
-
-      - name: Check Pull Request Status
-        id: check_pr
         uses: actions/github-script@v6
         with:
           script: |
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: 'MerihanAhmedM:pr-branch'
+            const { App } = require('@octokit/app');
+            const { Octokit } = require('@octokit/core');
+
+            // Load GitHub App credentials from secrets
+            const appId = process.env.APP_ID;
+            const privateKey = process.env.PRIVATE_KEY;
+            const installationId = process.env.INSTALLATION_ID;
+
+            // Create an authenticated Octokit instance
+            const app = new App({ appId, privateKey });
+            const installationAccessToken = await app.getInstallationAccessToken({ installationId });
+
+            const octokit = new Octokit({ auth: installationAccessToken });
+
+            // Create a pull request
+            const { data: pullRequest } = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
+              owner: 'MerihanAhmedM',
+              repo: 'gold',
+              title: 'Automated PR from common-workflows',
+              head: 'pr-branch',
+              base: 'main',
+              body: 'This is an automated PR created by a workflow.'
             });
-            if (prs.length > 0) {
-              console.log('Pull request created successfully.');
-            } else {
-              console.log('No pull request found.');
-            }
+
+            console.log('Pull request created successfully:', pullRequest.html_url);
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          INSTALLATION_ID: ${{ secrets.INSTALLATION_ID }}
