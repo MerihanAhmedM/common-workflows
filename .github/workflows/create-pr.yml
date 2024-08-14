@@ -14,22 +14,22 @@ jobs:
         with: 
            node-version: '16'
            
-      - name: Checkout code
+      - name: Create GitHub App Token
         uses: actions/create-github-app-token@v1
         id: app-token
         with:
-          app-id: ${{vars.APP_ID}}
-          private-key: ${{ secrets.PRIVATE_KEY}}
-          installation-id: ${{vars.INSTALLATION_ID}}
-      - name: create pull req
-        uses:  peter-evans/create-pull-request@v4
+          app-id: ${{ secrets.APP_ID }}  # Ensure APP_ID is set correctly in your secrets
+          private-key: ${{ secrets.PRIVATE_KEY }}  # Ensure PRIVATE_KEY is set correctly in your secrets
+          owner: MerihanAhmedM  # Replace with your GitHub username or organization
+          repositories: '["MerihanAhmedM/gold"]'  # List of repositories if needed
+          skip-token-revoke: true  # Optional, depends on your needs
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ steps.create-app-token.outputs.token }}
+          token: ${{ steps.app-token.outputs.token }}
           repository: MerihanAhmedM/gold
           title: My Pull Request
           body: This is a pull request created by GitHub Actions
           head: main
           base: main
-
-
-        
