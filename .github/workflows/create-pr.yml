@@ -14,34 +14,48 @@ jobs:
 
       - name: Create Pull Request
         id: create_pr
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { App } = require('@octokit/app');
-            const { Octokit } = require('@octokit/core');
+        run: |
+          # Install Node.js and dependencies
+          sudo apt-get install -y nodejs npm
+          npm install @octokit/app @octokit/core
 
-            // Load GitHub App credentials from secrets
+          # Create a Node.js script to handle PR creation
+          echo "const { App } = require('@octokit/app');
+          const { Octokit } = require('@octokit/core');
+          
+          async function createPullRequest() {
             const appId = process.env.APP_ID;
             const privateKey = process.env.PRIVATE_KEY;
             const installationId = process.env.INSTALLATION_ID;
-
-            // Create an authenticated Octokit instance
+            
+            // Authenticate as the GitHub App
             const app = new App({ appId, privateKey });
             const installationAccessToken = await app.getInstallationAccessToken({ installationId });
-
+            
             const octokit = new Octokit({ auth: installationAccessToken });
-
+            
             // Create a pull request
-            const { data: pullRequest } = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
-              owner: 'MerihanAhmedM',
-              repo: 'gold',
-              title: 'Automated PR from common-workflows',
-              head: 'pr-branch',
-              base: 'main',
-              body: 'This is an automated PR created by a workflow.'
-            });
+            try {
+              const response = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
+                owner: 'MerihanAhmedM',
+                repo: 'gold',
+                title: 'Automated PR from common-workflows',
+                head: 'pr-branch',
+                base: 'main',
+                body: 'This is an automated PR created by a workflow.'
+              });
+              
+              console.log('Pull request created successfully:', response.data.html_url);
+            } catch (error) {
+              console.error('Error creating pull request:', error.message);
+              process.exit(1);
+            }
+          }
+          
+          createPullRequest();" > create-pr.js
 
-            console.log('Pull request created successfully:', pullRequest.html_url);
+          # Run the Node.js script
+          node create-pr.js
         env:
           APP_ID: ${{ secrets.APP_ID }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
