@@ -18,7 +18,7 @@ jobs:
         uses: actions/create-github-app-token@v1
         id: app-token
         with:
-          app-id: ${{ secrets.APP_ID }}  # Ensure APP_ID is set correctly in your secrets
+          app-id: ${{vars.APP_ID }}  # Ensure APP_ID is set correctly in your secrets
           private-key: ${{ secrets.PRIVATE_KEY }}  # Ensure PRIVATE_KEY is set correctly in your secrets
           owner: MerihanAhmedM  # Replace with your GitHub username or organization
           repositories: '["MerihanAhmedM/gold"]'  # List of repositories if needed
