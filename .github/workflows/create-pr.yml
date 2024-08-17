@@ -1,35 +1,47 @@
-name: Create Pull Request
+name: Create PR
 
-on:
-  push:
-    branches:
-      - main
+on: push
 
 jobs:
   create-pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with: 
-           node-version: '16'
-           
-      - name: Create GitHub App Token
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{vars.APP_ID }}  # Ensure APP_ID is set correctly in your secrets
-          private-key: ${{ secrets.PRIVATE_KEY }}  # Ensure PRIVATE_KEY is set correctly in your secrets
-          owner: MerihanAhmedM  # Replace with your GitHub username or organization
-          repositories: '["MerihanAhmedM/gold"]'  # List of repositories if needed
-          skip-token-revoke: true  # Optional, depends on your needs
+    - name: Checkout code from common-workflows
+      uses: actions/checkout@v3  
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          repository: MerihanAhmedM/gold
-          title: My Pull Request
-          body: This is a pull request created by GitHub Actions
-          head: main
-          base: main
+    - name: Get Token
+      id: get_workflow_token
+      uses: peter-murray/workflow-application-token-action@v3
+      with:
+        application_id: ${{ vars.APP_ID }}
+        application_private_key: ${{ secrets.PRIVATE_KEY }}    
+
+    - name: Checkout gold repository
+      uses: actions/checkout@v3
+      with:
+        repository: MerihanAhmedM/gold
+        token: ${{ steps.get_workflow_token.outputs.token }}
+        ref: main  
+
+    - name: Generate random number
+      id: random
+      run: echo "value=$RANDOM" >> $GITHUB_ENV 
+
+    - name: Create file with random number
+      run: echo "${{ env.value }}" > random_number${{ env.value }}.txt  
+      
+    - name: Commit and push new file
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "Merihanahmed3f@gmail.com"
+        git checkout -b post-${{ env.value }} 
+        git add random_number${{ env.value }}.txt
+        git commit -m "New post with random number"
+        git push origin post-${{ env.value }}
+
+    - name: Create pull request
+      run: gh pr create -B main -H post-${{ env.value }} --title 'Merge branch with random number file' --body 'Created by GitHub action'
+      env:
+        GITHUB_TOKEN: ${{ steps.get_workflow_token.outputs.token }}
+
+
