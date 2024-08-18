@@ -1,4 +1,4 @@
-name: Create Pull Request with GitHub App
+name: Create Pull Request
 
 on:
   push:
@@ -18,14 +18,14 @@ jobs:
         uses: actions/create-github-app-token@v1
         id: app-token
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
-          installation-id: ${{ secrets.INSTALLATION_ID }}  # Replace with your installation ID
-          repository: MerihanAhmedM/gold  # Optional, if needed
+          app-id: ${{ secrets.APP_ID }}  # Ensure APP_ID is set correctly in your secrets
+          private-key: ${{ secrets.PRIVATE_KEY }}  # Ensure PRIVATE_KEY is set correctly in your secrets
+          owner: MerihanAhmedM  # Replace with your GitHub username or organization
+          repositories: '["MerihanAhmedM/gold"]'  # List of repositories if needed
           skip-token-revoke: true  # Optional, depends on your needs
 
       - name: Create Pull Request
-        uses: robinschleusener/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
           repository: MerihanAhmedM/gold
